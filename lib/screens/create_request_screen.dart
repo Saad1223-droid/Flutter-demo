@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/help_request.dart';
+import '../services/db_helper.dart';
 
 class CreateRequestScreen extends StatefulWidget {
   @override
@@ -14,15 +15,21 @@ class _CreateRequestScreenState extends State<CreateRequestScreen> {
 
   final List<String> _categories = ['Study', 'Food', 'Jobs', 'General'];
 
-  void _submitForm() {
+  Future<void> _submitForm() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
+
       final newRequest = HelpRequest(
         title: _title,
         category: _category,
         details: _details,
       );
-      Navigator.pop(context, newRequest);
+
+      // Save into DB
+      await DBHelper().insertRequest(newRequest);
+
+      // Navigate back to request list
+      Navigator.pop(context, true); // return a flag so list knows to refresh
     }
   }
 
@@ -39,15 +46,18 @@ class _CreateRequestScreenState extends State<CreateRequestScreen> {
               TextFormField(
                 decoration: InputDecoration(labelText: "Title"),
                 onSaved: (value) => _title = value!,
-                validator: (value) => value!.isEmpty ? "Please enter a title" : null,
+                validator: (value) =>
+                value!.isEmpty ? "Please enter a title" : null,
               ),
               SizedBox(height: 10),
               DropdownButtonFormField(
                 value: _category,
                 items: _categories
-                    .map((cat) => DropdownMenuItem(value: cat, child: Text(cat)))
+                    .map((cat) =>
+                    DropdownMenuItem(value: cat, child: Text(cat)))
                     .toList(),
-                onChanged: (value) => setState(() => _category = value as String),
+                onChanged: (value) =>
+                    setState(() => _category = value as String),
                 decoration: InputDecoration(labelText: "Category"),
               ),
               SizedBox(height: 10),
@@ -55,7 +65,9 @@ class _CreateRequestScreenState extends State<CreateRequestScreen> {
                 decoration: InputDecoration(labelText: "Details"),
                 maxLines: 3,
                 onSaved: (value) => _details = value!,
-                validator: (value) => value!.isEmpty ? "Please provide more information" : null,
+                validator: (value) => value!.isEmpty
+                    ? "Please provide more information"
+                    : null,
               ),
               SizedBox(height: 20),
               ElevatedButton(
